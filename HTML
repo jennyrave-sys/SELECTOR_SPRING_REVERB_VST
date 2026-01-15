@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>JENNNYRAVE SELECTOR SPRING REVERB | Dub Sound System Plugin</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Share+Tech+Mono&family=Archivo+Black&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        :root {
+            --brand-green: #55ff55;
+            --brand-rust: #8b4513;
+            --dark-bg: #0a0a0a;
+            --panel-grey: #1a1a1a;
+            --text-silk: #e0e0e0;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #55ff55; }
+
+        html {
+            height: auto;
+            min-height: 100%;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            height: auto;
+            background-color: var(--dark-bg);
+            color: var(--text-silk);
+            font-family: 'Manrope', sans-serif;
+            overflow-x: hidden;
+            overflow-y: visible;
+        }
+
+        h1, h2, h3, .logo {
+            font-family: 'Archivo Black', sans-serif;
+            text-transform: uppercase;
+        }
+
+        .mono-font {
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 5%;
+            background: rgba(0,0,0,0.9);
+            border-bottom: 1px solid #333;
+            position: sticky; 
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-brand {
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+        }
+
+        .logo {
+            font-weight: 400;
+            font-size: 32px; 
+            color: #fff;
+            letter-spacing: 2px;
+            line-height: 1;
+        }
+
+        .hero {
+            height: auto; 
+            min-height: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: radial-gradient(circle at center, #1f1f1f 0%, #050505 80%);
+            padding: 80px 20px 80px 20px;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .hero-title {
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 42px; /* Increased from 32px to be a little bit bigger than branding */
+            color: #fff;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        h2 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: clamp(18px, 4vw, 32px);
+            color: var(--brand-green);
+            margin: 0 0 40px 0;
+            font-weight: 400;
+            letter-spacing: 10px;
+            text-shadow: 0 0 20px rgba(85, 255, 85, 0.4);
+            position: relative;
+            z-index: 10;
+        }
+
+        .vst-preview {
+            width: 100%;
+            max-width: 1200px; 
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.9), 0 0 0 1px #333;
+            margin-bottom: 70px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .vst-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .cta-button {
+            padding: 24px 60px;
+            background: #222;
+            border: 2px solid var(--brand-green);
+            color: var(--brand-green);
+            font-family: 'Archivo Black', sans-serif;
+            font-size: 20px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            box-shadow: 0 0 20px rgba(85, 255, 85, 0.1);
+            display: inline-block;
+            position: relative;
+            z-index: 10;
+        }
+
+        .cta-button:hover {
+            background: var(--brand-green);
+            color: black;
+            box-shadow: 0 0 50px rgba(85, 255, 85, 0.6);
+        }
+
+        .features {
+            padding: 120px 5vw;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            background-color: var(--panel-grey);
+            border-top: 1px solid #333;
+        }
+
+        .feature-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #333;
+            padding: 40px;
+            border-radius: 8px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--brand-green);
+        }
+
+        .feature-icon {
+            font-size: 24px;
+            color: var(--brand-green);
+            margin-bottom: 25px;
+            font-family: 'Share Tech Mono', monospace;
+            border: 1px solid var(--brand-green);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 15px 0;
+            font-size: 22px;
+            color: white;
+        }
+
+        .feature-card p {
+            color: #999;
+            font-size: 16px;
+            line-height: 1.7;
+            margin: 0;
+        }
+
+        .architecture {
+            padding: 120px 5vw;
+            background: linear-gradient(180deg, #111 0%, #050505 100%);
+            border-top: 1px solid #333;
+            text-align: center;
+        }
+
+        .arch-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 100px;
+        }
+
+        .arch-text h4 {
+            color: var(--brand-green);
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin: 0 0 20px 0;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .arch-text h3 {
+            font-size: clamp(32px, 6vw, 48px);
+            color: white;
+            margin: 0 0 30px 0;
+        }
+
+        .arch-text p {
+            font-size: 20px;
+            line-height: 1.9;
+            color: #aaa;
+            margin: 0;
+        }
+
+        .controls-section {
+            padding: 120px 5vw;
+            background-color: #080a0c;
+            border-top: 1px solid #333;
+        }
+
+        .controls-section h3 {
+            font-size: clamp(32px, 6vw, 42px);
+            text-align: center;
+            margin-bottom: 80px;
+            color: white;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .control-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+        }
+
+        .control-knob-visual {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #f5f5f5 0%, #d0d0d0 75%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+            box-shadow: inset 0 1px 3px rgba(255,255,255,1), 0 4px 10px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .control-knob-visual::after {
+            content: '';
+            position: absolute;
+            top: 7px; left: 50%;
+            transform: translateX(-50%);
+            width: 5px; height: 16px;
+            background: #222;
+            border-radius: 1px;
+        }
+
+        .control-text h4 {
+            margin: 0 0 8px 0;
+            color: #fff;
+            font-family: 'Manrope', sans-serif;
+            font-weight: 800;
+            font-size: 18px;
+        }
+
+        .control-text p {
+            margin: 0;
+            font-size: 15px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .install-section {
+            padding: 120px 5vw;
+            text-align: center;
+            border-top: 1px solid #333;
+            background: var(--dark-bg);
+        }
+
+        .install-list {
+            display: inline-block;
+            text-align: left;
+            border: 1px solid #333;
+            padding: 60px;
+            background: #000;
+            font-size: 16px;
+            color: #ccc;
+            max-width: 800px;
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .code-block {
+            display: block;
+            background: #111;
+            color: var(--brand-green);
+            padding: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            margin-top: 20px;
+            border-radius: 4px;
+            font-size: 16px;
+            border-left: 3px solid var(--brand-green);
+        }
+
+        footer {
+            padding: 60px 20px;
+            text-align: center;
+            font-size: 13px;
+            color: #444;
+            border-top: 1px solid #222;
+            background: #050505;
+        }
+        
+        .legal-notice { margin-top: 15px; opacity: 0.5; }
+
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 15px 5%;
+            }
+
+            .logo {
+                font-size: 26px;
+            }
+            
+            .hero {
+                padding: 60px 20px 40px 20px;
+            }
+
+            .hero-title { font-size: 32px; }
+
+            h2 { font-size: 14px; margin: 30px 0; letter-spacing: 5px; }
+            
+            .cta-button {
+                width: 100%;
+                text-align: center;
+                box-sizing: border-box;
+                padding: 20px 30px;
+            }
+            
+            .features, .architecture, .controls-section, .install-section {
+                padding: 60px 5vw;
+            }
+            
+            .vst-preview {
+                transform: none;
+                margin-bottom: 40px;
+            }
+            
+            .install-list {
+                padding: 35px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-brand">
+            <div class="logo">JENNNYRAVE</div>
+        </div>
+        <a href="https://github.com/jennyrave-sys/SELECTOR_SPRING_REVERB_VST/raw/refs/heads/main/Selector%20Spring%20Reverb.vst3.zip" class="cta-button" style="padding: 10px 20px; font-size: 12px;" target="_blank" rel="noopener noreferrer">DOWNLOAD VST 3</a>
+    </header>
+
+    <section class="hero">
+        <div class="max-w-7xl mx-auto w-full flex flex-col items-center text-center relative z-10">
+            
+            <div class="hero-title">SELECTOR SPRING REVERB</div>
+
+            <h2>// THE SOUND SYSTEM WEAPON //</h2>
+            
+            <p class="text-gray-400 max-w-3xl mx-auto font-light leading-relaxed mt-4 mb-12 text-lg md:text-2xl">
+                The definitive Dub & Reggae reverb unit. Capturing the volatile, physical soul of a <span class="text-white font-bold">legendary 70s spring tank</span>.
+            </p>
+
+            <div class="vst-preview">
+                <img src="https://raw.githubusercontent.com/jennyrave-sys/SELECTOR_SPRING_REVERB_VST/main/jennyrave_selector_spring_revberb.jpg" alt="Selector Spring Reverb Interface">
+            </div>
+
+            <div id="download">
+                <a href="https://github.com/jennyrave-sys/SELECTOR_SPRING_REVERB_VST/raw/refs/heads/main/Selector%20Spring%20Reverb.vst3.zip" class="cta-button" target="_blank" rel="noopener noreferrer">DOWNLOAD VST3</a>
+                <p class="mono-font" style="margin-top: 25px; color: #555; font-size: 14px;">Version 1.0.0 | Windows 64-bit VST3</p>
+            </div>
+            
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">01</div>
+            <h3>PREAMP SATURATION</h3>
+            <p>Modeled on the high-gain input stage of vintage analog gear. The <strong>DRIVE</strong> knob pushes the signal into warm harmonic distortion before it even hits the spring.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">02</div>
+            <h3>PHYSICAL TENSION</h3>
+            <p>Unlike standard algorithmic reverbs, the <strong>DECAY</strong> control simulates the physical tension of the metal coils, creating authentic "boing" and dispersion artifacts.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">03</div>
+            <h3>SELF-OSCILLATION</h3>
+            <p>Push the <strong>FEEDBACK</strong> past 90% to trigger the feedback loop. Create infinite dub sirens and runaway noise washes without external hardware.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">04</div>
+            <h3>DUB TONE STACK</h3>
+            <p>A specialized EQ circuit (<strong>BASS / TREBLE</strong>) sits inside the wet signal path, allowing you to darken the tails for that murky, underwater classic dub sound.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">05</div>
+            <h3>METERING</h3>
+            <p>High-resolution 18-segment LED meters for Input and Output levels, behind glass for precise gain staging in dark studios.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">06</div>
+            <h3>CPU OPTIMIZED</h3>
+            <p>Engineered with C++ architecture for zero-latency performance. Ideal for live tracking or dense mixes, ensuring rock-solid stability without taxing your CPU.</p>
+        </div>
+    </section>
+
+    <section class="architecture">
+        <div class="arch-container">
+            <div class="arch-block">
+                <div class="arch-text">
+                    <h4>THE PHYSICS</h4>
+                    <h3>TRIPLE-SPRING TANK</h3>
+                    <p>The core of the Selector Reverb is a mathematical model of a rare, vintage triple-spring tank found in legendary 70s studio gear. Specific decay times and dispersion characteristics of the original springs were mapped to capture that metallic "splash" on snare drums.</p>
+                </div>
+            </div>
+            
+            <div class="arch-block">
+                <div class="arch-text">
+                    <h4>THE CULTURE</h4>
+                    <h3>BUILT FOR THE SELECTOR</h3>
+                    <p>In Sound System culture, the reverb isn't just an effect—it's an instrument. This plugin is designed to be played live. Grab the knobs, crank the feedback, and let the springs sing.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="controls-section">
+        <h3>CONTROL SURFACE</h3>
+        <div class="controls-grid">
+            <div class="control-item">
+                <div class="control-knob-visual"></div>
+                <div class="control-text">
+                    <h4>DRIVE</h4>
+                    <p>Input gain boost (0 to +24dB). Drives the preamp into saturation.</p>
+                </div>
+            </div>
+            <div class="control-item">
+                <div class="control-knob-visual"></div>
+                <div class="control-text">
+                    <h4>DECAY</h4>
+                    <p>Sets the reverb time (1.2s to 4.0s). Simulates spring tension.</p>
+                </div>
+            </div>
+            <div class="control-item">
+                <div class="control-knob-visual"></div>
+                <div class="control-text">
+                    <h4>FEEDBACK</h4>
+                    <p>Re-injects the wet signal back into the input. Dangerous at high levels.</p>
+                </div>
+            </div>
+            <div class="control-item">
+                <div class="control-knob-visual"></div>
+                <div class="control-text">
+                    <h4>BASS</h4>
+                    <p>Low shelf EQ. Cut to clean up mud, boost for thunder.</p>
+                </div>
+            </div>
+            <div class="control-item">
+                <div class="control-knob-visual"></div>
+                <div class="control-text">
+                    <h4>TREBLE</h4>
+                    <p>High shelf EQ. Darkens the spring splash.</p>
+                </div>
+            </div>
+            <div class="control-item">
+                <div class="control-knob-visual"></div>
+                <div class="control-text">
+                    <h4>MIX</h4>
+                    <p>Dry/Wet blend. 100% Wet is ideal for Aux sends.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="install-section">
+        <h3 style="font-family: 'Archivo Black'; color:white; margin-bottom:40px;">INSTALLATION</h3>
+        <div class="install-list">
+            <div style="margin-bottom: 25px;">
+                <h4 style="color:var(--brand-green); font-family:'Share Tech Mono'; margin:0 0 8px 0;">STEP 01</h4>
+                <p>Download the <a href="https://github.com/jennyrave-sys/SELECTOR_SPRING_REVERB_VST/raw/refs/heads/main/Selector%20Spring%20Reverb.vst3.zip" style="color:var(--brand-green); text-decoration: underline;">ZIP archive</a>.</p>
+            </div>
+            <div style="margin-bottom: 25px;">
+                <h4 style="color:var(--brand-green); font-family:'Share Tech Mono'; margin:0 0 8px 0;">STEP 02</h4>
+                <p>Extract the <strong>Selector Spring Reverb.vst3</strong> folder.</p>
+            </div>
+            <div style="margin-bottom: 0;">
+                <h4 style="color:var(--brand-green); font-family:'Share Tech Mono'; margin:0 0 5px 0;">STEP 03</h4>
+                <p>Move the folder to your VST3 directory:</p>
+                <code class="code-block">C:\Program Files\Common Files\VST3</code>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>2026 JENNNYRAVE</p>
+        <p class="legal-notice">Released under General Public License (GPL) 3.0</p>
+        <p class="legal-notice">VST is a trademark of Steinberg Media Technologies GmbH.</p>
+    </footer>
+
+</body>
+</html>
