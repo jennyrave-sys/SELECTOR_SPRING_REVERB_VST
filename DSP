@@ -1,0 +1,208 @@
+#pragma once
+#include <JuceHeader.h>
+#include <vector>
+#include <cmath>
+
+const double PI = 3.14159265358979323846;
+
+class DelayLine {
+public:
+    void setSampleRate(double sr) { sampleRate = sr; }
+    void setDelayTime(float seconds) { targetDelaySamples = seconds * sampleRate; }
+    void resize(int maxSamples) { buffer.resize(maxSamples, 0.0f); std::fill(buffer.begin(), buffer.end(), 0.0f); writeIndex = 0; }
+    void push(float input) { buffer[writeIndex] = input; writeIndex++; if (writeIndex >= buffer.size()) writeIndex = 0; }
+    
+    inline float read(float modulationSamples = 0.0f) {
+        float delayPos = targetDelaySamples + modulationSamples;
+        if (delayPos < 1.0f) delayPos = 1.0f;
+        if (delayPos > buffer.size() - 2.0f) delayPos = buffer.size() - 2.0f;
+        
+        float readPos = (float)writeIndex - delayPos;
+        while (readPos < 0.0f) readPos += (float)buffer.size();
+        while (readPos >= (float)buffer.size()) readPos -= (float)buffer.size();
+        
+        int indexA = (int)readPos;
+        int indexB = indexA + 1;
+        if (indexB >= buffer.size()) indexB = 0;
+        
+        float frac = readPos - indexA;
+        return buffer[indexA] * (1.0f - frac) + buffer[indexB] * frac;
+    }
+private:
+    std::vector<float> buffer;
+    int writeIndex = 0;
+    float targetDelaySamples = 0.0f;
+    double sampleRate = 44100.0;
+};
+
+class LFO {
+public:
+    void setSampleRate(double sr) { sampleRate = sr; }
+    void setFrequency(float freq) { phaseIncrement = (freq * 2.0f * PI) / sampleRate; }
+    void setPhase(float p) { phase = p; }
+    inline float process() {
+        float out = std::sin(phase);
+        phase += phaseIncrement;
+        if (phase >= 2.0f * PI) phase -= 2.0f * PI;
+        return out;
+    }
+private:
+    double phase = 0.0, phaseIncrement = 0.0, sampleRate = 44100.0;
+};
+
+class OnePoleLPF {
+public:
+    void setCoefficients(float frequency, double sampleRate) {
+        b1 = std::exp(-2.0 * PI * frequency / sampleRate);
+        a0 = 1.0 - b1;
+    }
+    inline float process(float input) { z1 = input * a0 + z1 * b1; return z1; }
+    void reset() { z1 = 0.0f; }
+private:
+    float a0 = 1.0f, b1 = 0.0f, z1 = 0.0f; 
+};
+
+class BiquadFilter {
+public:
+    enum Type { LowShelf, HighShelf };
+    void setCoefficients(Type type, float freq, float q, float dbGain, double sampleRate) {
+        double A = std::pow(10.0, dbGain / 40.0);
+        double w0 = 2.0 * PI * freq / sampleRate;
+        double cosW0 = std::cos(w0);
+        double sinW0 = std::sin(w0);
+        double alpha = sinW0 / 2.0 * std::sqrt((A + 1.0/A) * (1.0/q - 1.0) + 2.0);
+        double beta = 2.0 * std::sqrt(A) * alpha;
+        double b0_d, b1_d, b2_d, a0_d, a1_d, a2_d;
+
+        if (type == LowShelf) {
+            b0_d = A*((A+1)-(A-1)*cosW0+beta); b1_d = 2*A*((A-1)-(A+1)*cosW0); b2_d = A*((A+1)-(A-1)*cosW0-beta);
+            a0_d = (A+1)+(A-1)*cosW0+beta;     a1_d = -2*((A-1)+(A+1)*cosW0);  a2_d = (A+1)+(A-1)*cosW0-beta;
+        } else {
+            b0_d = A*((A+1)+(A-1)*cosW0+beta); b1_d = -2*A*((A-1)+(A+1)*cosW0); b2_d = A*((A+1)+(A-1)*cosW0-beta);
+            a0_d = (A+1)-(A-1)*cosW0+beta;     a1_d = 2*((A-1)-(A+1)*cosW0);    a2_d = (A+1)-(A-1)*cosW0-beta;
+        }
+        float invA0 = (float)(1.0/a0_d);
+        b0=(float)b0_d*invA0; b1=(float)b1_d*invA0; b2=(float)b2_d*invA0;
+        a1=(float)a1_d*invA0; a2=(float)a2_d*invA0;
+    }
+    inline float process(float in) {
+        float out = b0*in + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+        x2=x1; x1=in; y2=y1; y1=out;
+        return out;
+    }
+    void reset() { x1=0; x2=0; y1=0; y2=0; }
+private:
+    float b0=1,b1=0,b2=0,a1=0,a2=0, x1=0,x2=0,y1=0,y2=0;
+};
+
+class AllPassFilter {
+public:
+    void prepare(int maxDelay) { buffer.resize(maxDelay, 0.0f); index = 0; }
+    inline float process(float input, float feedback = 0.5f) {
+        if (buffer.empty()) return input;
+        float bufferedVal = buffer[index];
+        float out = -input + bufferedVal;
+        buffer[index] = input + (bufferedVal * feedback) + 1e-18f;
+        index++; if (index >= buffer.size()) index = 0;
+        return out;
+    }
+private:
+    std::vector<float> buffer; int index = 0;
+};
+
+class DCBlocker {
+public:
+    inline float process(float sample) {
+        float out = sample - lastIn + 0.995f * lastOut;
+        lastIn = sample; lastOut = out;
+        return out;
+    }
+private:
+    float lastIn=0.0f, lastOut=0.0f;
+};
+
+// --- Main Engine ---
+
+class SpringReverbEngine {
+public:
+    void prepare(double sampleRate, int channelIndex) {
+        currentSampleRate = sampleRate;
+        float spread = (channelIndex == 1) ? 1.015f : 1.0f; // Stereo width
+
+        spring1.setSampleRate(sampleRate); spring1.resize((int)(sampleRate * 0.15)); spring1.setDelayTime(0.029f * spread);
+        spring2.setSampleRate(sampleRate); spring2.resize((int)(sampleRate * 0.15)); spring2.setDelayTime(0.037f * spread);
+        spring3.setSampleRate(sampleRate); spring3.resize((int)(sampleRate * 0.15)); spring3.setDelayTime(0.043f * spread);
+
+        damp1.setCoefficients(4500.0f, sampleRate);
+        damp2.setCoefficients(4100.0f, sampleRate);
+        damp3.setCoefficients(3800.0f, sampleRate);
+
+        ap1.prepare((int)(sampleRate * 0.0050 * spread));
+        ap2.prepare((int)(sampleRate * 0.0017 * spread));
+
+        shelfBass.setCoefficients(BiquadFilter::LowShelf, 250.0f, 0.707f, 0.0f, sampleRate);
+        shelfTreble.setCoefficients(BiquadFilter::HighShelf, 4000.0f, 0.707f, 0.0f, sampleRate);
+        dcBlocker.process(0.0f);
+
+        float phaseOffset = (channelIndex == 1) ? (float)PI : 0.0f;
+        lfo1.setSampleRate(sampleRate); lfo1.setFrequency(1.5f); lfo1.setPhase(phaseOffset);
+        lfo2.setSampleRate(sampleRate); lfo2.setFrequency(2.2f); lfo2.setPhase(phaseOffset + 0.5f);
+        lfo3.setSampleRate(sampleRate); lfo3.setFrequency(0.8f); lfo3.setPhase(phaseOffset + 1.0f);
+    }
+
+    void updateParameters(float driveDb, float decayTime, float feedbackPercent, float bassDb, float trebleDb) {
+        inputGain = juce::Decibels::decibelsToGain(driveDb);
+        shelfBass.setCoefficients(BiquadFilter::LowShelf, 250.0f, 0.707f, bassDb, currentSampleRate);
+        shelfTreble.setCoefficients(BiquadFilter::HighShelf, 4000.0f, 0.707f, trebleDb, currentSampleRate);
+        
+        float decayCoeff = juce::jmap(decayTime, 1.2f, 4.0f, 0.80f, 0.98f);
+        float extraFeedback = (feedbackPercent / 100.0f) * 0.15f; 
+        totalFeedback = decayCoeff + extraFeedback;
+        if (totalFeedback > 1.05f) totalFeedback = 1.05f; 
+    }
+
+    inline float processSample(float input) {
+        float drivenSignal = std::tanh(input * inputGain);
+        
+        float mod1 = lfo1.process() * 8.0f; 
+        float mod2 = lfo2.process() * 6.0f;
+        float mod3 = lfo3.process() * 10.0f;
+
+        float s1Out = spring1.read(mod1);
+        float s2Out = spring2.read(mod2);
+        float s3Out = spring3.read(mod3);
+
+        float fb1 = damp1.process(s1Out) * totalFeedback;
+        float fb2 = damp2.process(s2Out) * totalFeedback;
+        float fb3 = damp3.process(s3Out) * totalFeedback;
+
+        spring1.push(drivenSignal + fb1);
+        spring2.push(drivenSignal + fb2);
+        spring3.push(drivenSignal + fb3);
+
+        float wetSignal = (s1Out + s2Out + s3Out) * 0.4f;
+        wetSignal = ap1.process(wetSignal, 0.6f);
+        wetSignal = ap2.process(wetSignal, 0.6f);
+
+        wetSignal = shelfBass.process(wetSignal);
+        wetSignal = shelfTreble.process(wetSignal);
+        wetSignal = dcBlocker.process(wetSignal);
+        
+        // Output Clipper
+        if (wetSignal > 1.5f) wetSignal = 1.5f + std::tanh(wetSignal - 1.5f);
+        else if (wetSignal < -1.5f) wetSignal = -1.5f + std::tanh(wetSignal + 1.5f);
+        
+        return wetSignal; 
+    }
+
+private:
+    double currentSampleRate = 44100.0;
+    float inputGain = 1.0f;
+    float totalFeedback = 0.0f;
+    DelayLine spring1, spring2, spring3;
+    OnePoleLPF damp1, damp2, damp3;
+    AllPassFilter ap1, ap2;
+    BiquadFilter shelfBass, shelfTreble;
+    DCBlocker dcBlocker;
+    LFO lfo1, lfo2, lfo3;
+};
